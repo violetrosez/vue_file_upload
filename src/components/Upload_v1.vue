@@ -16,11 +16,11 @@
      
     </el-upload> -->
 
-    <!-- v2 -->
-    <!-- <form action="http://localhost:3000/upload" method="POST" enctype="multipart/form-data"> 
+
+    <form action="http://localhost:3000/upload" method="POST" enctype="multipart/form-data"> 
       <input type="file" name="file" id="file"/>
       <input type="submit" value="提交">
-    </form> -->
+    </form>
   </div>
 </template>
 <script>

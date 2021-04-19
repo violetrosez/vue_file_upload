@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title></title>
+    <!-- 因为把static文件夹挂载了文件服务 -->
+    <!-- //http://localhost:3000/css/app.css  首先去static目录找 ，如果能找到返回对应的文件，找不到 next() -->
+    <link rel="stylesheet" href="/css/app.css">
+</head>
+<body>
+    <h1 id="title">这是一行标题</h1>
+    <form action="/doAdd" method="post">
+        用户名: <input type="text" name="username"/>
+        <br/>
+        <br/>
+        密　码: <input type="password" name="password"/>
+        <br/>
+        <br/>
+        <button type="submit">提交</button>
+    </form>
+
+</body>
+</html>
