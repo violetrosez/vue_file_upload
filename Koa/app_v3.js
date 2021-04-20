@@ -8,6 +8,7 @@ let path = require("path");
 let koaBody = require("koa-body");
 
 const cors = require("koa-cors"); // 解决跨域
+const { log } = require("console");
 
 let app = new koa();
 
@@ -32,7 +33,10 @@ app.use(async (ctx, next) => {
   if (ctx.status == 404) {
     ctx.body = "404 not found";
   } else {
-    console.log(ctx.url);
+    ctx.body = {
+      code: 0,
+      message: "成功",
+    };
   }
 });
 
@@ -40,14 +44,14 @@ router.post("/upload", async (ctx) => {
   // 获取上传文件
   const file = ctx.request.files.chunk;
   const { filename, index } = ctx.request.body;
-  console.log(filename);
+
   // 读取文件流
   const fileReader = fs.createReadStream(file.path);
 
   // 设置文件保存路径
   const filePath = path.join(__dirname, `/static/${filename}/`);
   // 组装成绝对路径
-  const fileResource = filePath + `/${filename}-${index}`;
+  const fileResource = path.join(filePath, `${index}-${filename}`);
 
   /**
    * 使用 createWriteStream 写入数据，然后使用管道流pipe拼接
@@ -69,6 +73,7 @@ router.post("/upload", async (ctx) => {
     });
   } else {
     await fileReader.pipe(writeStream);
+    ctx.status = 200;
     ctx.body = {
       file: filename,
       code: 0,
@@ -77,6 +82,37 @@ router.post("/upload", async (ctx) => {
   }
 });
 
+router.post("/merge", async (ctx) => {
+  let { filename, size } = JSON.parse(ctx.request.body);
+  const filePath = path.join(__dirname, `/static/${filename}/`);
+  fs.readdir(filePath, async (err, chunks) => {
+    if (err) {
+      throw new Error(err);
+    }
+
+    chunks = chunks.sort((a, b) => {
+      return a.split("-")[0] - b.split("-")[0];
+    });
+
+    for (let index = 0; index < chunks.length; index++) {
+      const chunk = chunks[index];
+      const fileReader = fs.createReadStream(`${filePath}/${chunk}`);
+
+      const writeStream = fs.createWriteStream(`${filePath}/${filename}`, {
+        start: index * size,
+      });
+      await fileReader.pipe(writeStream);
+      fs.rm(`${filePath}/${chunk}`, () => {
+        // console.log(`删除了${chunk}`);
+      });
+    }
+
+    ctx.body = {
+      code: 0,
+      message: "合并成功",
+    };
+  });
+});
 app.use(router.routes()); /*启动路由*/
 app.use(router.allowedMethods());
 /*

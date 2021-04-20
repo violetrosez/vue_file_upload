@@ -66,6 +66,7 @@ export default {
       let file = document.getElementById("file").files[0];
 
       let chunks = this.sliceFile(file);
+      console.log(chunks);
       let tasks = [];
       for (let index = 0; index < chunks.length; index++) {
         tasks.push(
@@ -76,12 +77,12 @@ export default {
           })
         );
       }
-
+      //发起合并请求
       Promise.all(tasks).then(() => {
         let xhr = new XMLHttpRequest();
         xhr.open("post", "http://localhost:3000/merge");
         let file = document.getElementById("file").files[0];
-        xhr.send(file.name);
+        xhr.send(JSON.stringify({ filename: file.name, size: chunks[0].size }));
         xhr.onreadystatechange = () => {
           if (xhr.readyState == 4 && xhr.status == 200) {
             this.$message({
