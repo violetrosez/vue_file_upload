@@ -1,4 +1,14 @@
-### koa文件后台
+# vue_file_upload
 
-#### app  运行
-#### static/file  存储接受到的文件
+## Project setup
+```
+npm install
+```
+### 选择运行的版本
+### 
+```
+node app_v1.js
+or
+node app_v2.js
+....
+```
