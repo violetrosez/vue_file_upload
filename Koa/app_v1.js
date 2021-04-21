@@ -38,42 +38,29 @@ app.use(async (ctx, next) => {
 
 router.post("/upload", async (ctx) => {
   // 获取上传文件
+
   const file = ctx.request.files.file;
 
   // 读取文件流
   const fileReader = fs.createReadStream(file.path);
-
   // 设置文件保存路径
-  const filePath = path.join(__dirname, "/static/file/");
-  // 组装成绝对路径
-  const fileResource = filePath + `/${file.name}`;
+  const filePath = path.join(__dirname, `/static/file/`);
 
-  /**
-   * 使用 createWriteStream 写入数据，然后使用管道流pipe拼接
-   */
-  const writeStream = fs.createWriteStream(fileResource);
-  // 判断 /static/file 文件夹是否存在，如果不在的话就创建一个
+  // 判断文件夹是否存在，如果不在的话就创建一个
   if (!fs.existsSync(filePath)) {
-    fs.mkdir(filePath, (err) => {
-      if (err) {
-        throw new Error(err);
-      } else {
-        fileReader.pipe(writeStream);
-        ctx.body = {
-          file: file.name,
-          code: 0,
-          message: "上传成功",
-        };
-      }
-    });
-  } else {
-    fileReader.pipe(writeStream);
-    ctx.body = {
-      file: file.name,
-      code: 0,
-      message: "上传成功",
-    };
+    fs.mkdirSync(filePath);
   }
+
+  // 保存的文件名
+  const fileResource = filePath + `/${file.name}`;
+  const writeStream = fs.createWriteStream(fileResource);
+
+  fileReader.pipe(writeStream);
+
+  ctx.body = {
+    code: 0,
+    message: "上传成功",
+  };
 });
 
 app.use(router.routes()); /*启动路由*/

@@ -58,7 +58,7 @@ export default {
         formData.append("index", data.index);
         formData.append("filename", data.filename);
         let xhr = new XMLHttpRequest();
-
+        this.progressArr = [];
         //监听进度
         xhr.upload.onprogress = (e) => {
           this.$set(this.progressArr, data.index, e.loaded); //加载了多少

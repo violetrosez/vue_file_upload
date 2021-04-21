@@ -51,7 +51,7 @@ router.post("/upload", async (ctx) => {
   }
 
   // 保存的文件名
-  const fileResource = filePath + `${filename}-${index}`;
+  const fileResource = filePath + `${index}-${filename}`;
   const writeStream = fs.createWriteStream(fileResource);
 
   fileReader.pipe(writeStream);
@@ -102,6 +102,7 @@ router.post("/merge", async (ctx) => {
     .catch((e) => {
       console.log(e);
     });
+  // fs.readdir(filePath, () => {});
 
   ctx.body = {
     code: 0,
