@@ -1,21 +1,17 @@
 let koa = require("koa");
-let router = require("koa-router")();   //koa 路由
+let router = require("koa-router")(); //koa 路由
 
-let fs = require('fs');
-let path = require('path');
+let fs = require("fs");
+let path = require("path");
 
 //处理文件上传的插件
 let koaBody = require("koa-body");
 
-
-const cors = require('koa-cors');   // 解决跨域
-const { log } = require("console");
+const cors = require("koa-cors"); // 解决跨域
 
 let app = new koa();
 
-app.use(cors())
-
-
+app.use(cors());
 
 //文件上传
 app.use(
@@ -25,10 +21,9 @@ app.use(
       // uploadDir: path.join(__dirname, 'static/file/'), // 设置文件上传目录
       keepExtensions: true, // 保持文件的后缀
       // maxFieldsSize: 2 * 1024 * 1024, // 文件上传大小，缺省2M
-    }
+    },
   })
 );
-
 
 //中间件
 //洋葱模型
@@ -41,12 +36,7 @@ app.use(async (ctx, next) => {
   }
 });
 
-
-
-
-
 router.post("/upload", async (ctx) => {
-
   // 获取上传文件
   const file = ctx.request.files.file;
 
@@ -57,7 +47,6 @@ router.post("/upload", async (ctx) => {
   const filePath = path.join(__dirname, "/static/file/");
   // 组装成绝对路径
   const fileResource = filePath + `/${file.name}`;
-
 
   /**
    * 使用 createWriteStream 写入数据，然后使用管道流pipe拼接
@@ -78,7 +67,6 @@ router.post("/upload", async (ctx) => {
       }
     });
   } else {
-
     fileReader.pipe(writeStream);
     ctx.body = {
       file: file.name,
@@ -87,8 +75,6 @@ router.post("/upload", async (ctx) => {
     };
   }
 });
-
-
 
 app.use(router.routes()); /*启动路由*/
 app.use(router.allowedMethods());

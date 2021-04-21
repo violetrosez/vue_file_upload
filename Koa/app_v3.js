@@ -8,7 +8,7 @@ let path = require("path");
 let koaBody = require("koa-body");
 
 const cors = require("koa-cors"); // 解决跨域
-const { log } = require("console");
+const { Promise } = require("core-js");
 
 let app = new koa();
 
@@ -27,16 +27,12 @@ app.use(
 );
 
 //中间件
-//洋葱模型
 app.use(async (ctx, next) => {
   await next();
   if (ctx.status == 404) {
-    ctx.body = "404 not found";
+    ctx.body = "404";
   } else {
-    ctx.body = {
-      code: 0,
-      message: "成功",
-    };
+    console.log(ctx.url);
   }
 });
 
@@ -44,77 +40,77 @@ router.post("/upload", async (ctx) => {
   // 获取上传文件
   const file = ctx.request.files.chunk;
   const { filename, index } = ctx.request.body;
-
   // 读取文件流
   const fileReader = fs.createReadStream(file.path);
-
   // 设置文件保存路径
   const filePath = path.join(__dirname, `/static/${filename}/`);
-  // 组装成绝对路径
-  const fileResource = path.join(filePath, `${index}-${filename}`);
 
-  /**
-   * 使用 createWriteStream 写入数据，然后使用管道流pipe拼接
-   */
-  const writeStream = fs.createWriteStream(fileResource);
   // 判断文件夹是否存在，如果不在的话就创建一个
   if (!fs.existsSync(filePath)) {
-    fs.mkdir(filePath, async (err) => {
-      if (err) {
-        throw new Error(err);
-      } else {
-        await fileReader.pipe(writeStream);
-        ctx.body = {
-          file: filename,
-          code: 0,
-          message: "上传成功",
-        };
-      }
-    });
-  } else {
-    await fileReader.pipe(writeStream);
-    ctx.status = 200;
-    ctx.body = {
-      file: filename,
-      code: 0,
-      message: "上传成功",
-    };
+    fs.mkdirSync(filePath);
   }
+
+  // 保存的文件名
+  const fileResource = filePath + `${filename}-${index}`;
+  const writeStream = fs.createWriteStream(fileResource);
+
+  fileReader.pipe(writeStream);
+
+  ctx.body = {
+    code: 0,
+    message: "上传成功",
+  };
 });
 
 router.post("/merge", async (ctx) => {
   let { filename, size } = JSON.parse(ctx.request.body);
   const filePath = path.join(__dirname, `/static/${filename}/`);
-  fs.readdir(filePath, async (err, chunks) => {
-    if (err) {
-      throw new Error(err);
-    }
 
-    chunks = chunks.sort((a, b) => {
-      return a.split("-")[0] - b.split("-")[0];
+  let chunks = fs.readdirSync(filePath);
+
+  chunks = chunks.sort((a, b) => {
+    return a.split("-")[0] - b.split("-")[0];
+  });
+
+  let tasks = [];
+  for (let index = 0; index < chunks.length; index++) {
+    const chunk = chunks[index];
+
+    let p = new Promise((resolve) => {
+      const fileReader = fs.createReadStream(`${filePath}/${chunk}`);
+      const writeStream = fs.createWriteStream(
+        path.join(__dirname, `/static/file/${filename}`),
+        {
+          start: index * size,
+        }
+      );
+      fileReader.pipe(writeStream);
+      fileReader.on("end", function() {
+        //1删掉切片
+        fs.unlinkSync(`${filePath}/${chunk}`);
+        resolve();
+      });
     });
 
-    for (let index = 0; index < chunks.length; index++) {
-      const chunk = chunks[index];
-      const fileReader = fs.createReadStream(`${filePath}/${chunk}`);
+    tasks.push(p);
+  }
+  //2切片传输完成，删除文件夹
+  Promise.all(tasks)
+    .then(() => {
+      fs.rmdirSync(filePath);
+    })
+    .catch((e) => {
+      console.log(e);
+    });
 
-      const writeStream = fs.createWriteStream(`${filePath}/${filename}`, {
-        start: index * size,
-      });
-      await fileReader.pipe(writeStream);
-      fs.rm(`${filePath}/${chunk}`, () => {
-        // console.log(`删除了${chunk}`);
-      });
-    }
-
-    ctx.body = {
-      code: 0,
-      message: "合并成功",
-    };
-  });
+  ctx.body = {
+    code: 0,
+    message: "合并成功",
+  };
 });
 app.use(router.routes()); /*启动路由*/
 app.use(router.allowedMethods());
+
 /*
  * router.allowedMethods()作用： 这是官方文档的推荐用法,我们可以
  * 看到 router.allowedMethods()用在了路由匹配 router.routes()之后,所以在当所有

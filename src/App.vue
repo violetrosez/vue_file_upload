@@ -5,14 +5,14 @@
 </template>
 
 <script>
-import Upload from './components/Upload_v3.vue'
+import Upload from "./components/Upload_v3.vue";
 
 export default {
-  name: 'App',
+  name: "App",
   components: {
-    Upload
-  }
-}
+    Upload,
+  },
+};
 </script>
 
 <style>
@@ -20,6 +20,5 @@ export default {
   font-family: Avenir, Helvetica, Arial, sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-
 }
 </style>

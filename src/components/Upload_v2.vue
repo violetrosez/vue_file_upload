@@ -4,7 +4,11 @@
       <i class="el-icon-upload" style="font-size: 26px"></i>
       拖拽文件到此处上传
     </div>
-    <el-progress :text-inside="true" :stroke-width="16" :percentage="progress"></el-progress>
+    <el-progress
+      :text-inside="true"
+      :stroke-width="16"
+      :percentage="progress"
+    ></el-progress>
   </div>
 </template>
 <script>
@@ -66,7 +70,7 @@ export default {
       formData.append("file", file);
 
       let xhr = new XMLHttpRequest();
-
+      console.time();
       //监听进度
       xhr.upload.onprogress = (e) => {
         this.progress = parseInt(String((e.loaded / e.total) * 100));
@@ -78,7 +82,7 @@ export default {
 
       xhr.onreadystatechange = () => {
         if (xhr.readyState == 4 && xhr.status == 200) {
-          console.log(xhr.responseText);
+          console.timeEnd();
           this.$message({
             message: "上传成功",
             type: "success",

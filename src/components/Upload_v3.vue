@@ -1,20 +1,34 @@
 <template>
-  <div class="content" ref="drop">
-    <input type="file" name="file" id="file" />
-    <el-button size="small" type="primary" @click="handleUpload"
-      >点击上传</el-button
-    >
+  <div>
+    <div class="content" ref="drop">
+      <input type="file" name="file" id="file" @change="addFile2Ctx" />
+      <el-button size="small" type="primary" @click="handleUpload"
+        >点击上传</el-button
+      >
+    </div>
+    <el-progress
+      :text-inside="true"
+      :stroke-width="16"
+      :percentage="progress"
+    ></el-progress>
   </div>
 </template>
 <script>
 export default {
   data() {
     return {
-      progress: 0,
+      fileCtx: null, //文件对象
+      progressArr: [], //每个切片的进度
     };
   },
 
   methods: {
+    /**
+     * change事件
+     */
+    addFile2Ctx() {
+      this.fileCtx = document.getElementById("file").files[0];
+    },
     /**
      * 文件切片方法
      * 文件
@@ -34,6 +48,9 @@ export default {
       return chunks;
     },
 
+    /**
+     * 请求上传
+     */
     requestUpload(data) {
       return new Promise((resolve) => {
         let formData = new FormData();
@@ -42,10 +59,10 @@ export default {
         formData.append("filename", data.filename);
         let xhr = new XMLHttpRequest();
 
-        // //监听进度
-        // xhr.upload.onprogress = (e) => {
-        //   this.progress = parseInt(String((e.loaded / e.total) * 100));
-        // };
+        //监听进度
+        xhr.upload.onprogress = (e) => {
+          this.$set(this.progressArr, data.index, e.loaded); //加载了多少
+        };
 
         xhr.open("post", "http://localhost:3000/upload");
 
@@ -60,13 +77,16 @@ export default {
     },
 
     /**
-     * 上传
+     * 处理upload
      */
     handleUpload() {
-      let file = document.getElementById("file").files[0];
-
+      let file = this.fileCtx;
+      if (file == null) {
+        alert("无文件");
+        return;
+      }
       let chunks = this.sliceFile(file);
-      console.log(chunks);
+
       let tasks = [];
       for (let index = 0; index < chunks.length; index++) {
         tasks.push(
@@ -77,16 +97,20 @@ export default {
           })
         );
       }
+      console.time();
       //发起合并请求
       Promise.all(tasks).then(() => {
+        console.timeEnd();
         let xhr = new XMLHttpRequest();
         xhr.open("post", "http://localhost:3000/merge");
-        let file = document.getElementById("file").files[0];
-        xhr.send(JSON.stringify({ filename: file.name, size: chunks[0].size }));
+
+        xhr.send(
+          JSON.stringify({ filename: this.fileCtx.name, size: chunks[0].size })
+        );
         xhr.onreadystatechange = () => {
           if (xhr.readyState == 4 && xhr.status == 200) {
             this.$message({
-              message: "上传成功",
+              message: "合并成功",
               type: "success",
             });
           }
@@ -94,12 +118,18 @@ export default {
       });
     },
   },
+
+  computed: {
+    progress() {
+      if (!this.fileCtx || !this.progressArr.length) return 0;
+
+      let loaded = this.progressArr.reduce((toal, cur) => toal + cur);
+
+      return parseInt(((loaded * 100) / this.fileCtx.size).toFixed(2));
+    },
+  },
 };
 </script>
-
-
-
-
 
 <!-- Add "scoped" attribute to limit CSS to this component only -->
 <style scoped>
