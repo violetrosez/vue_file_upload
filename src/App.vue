@@ -5,7 +5,7 @@
 </template>
 
 <script>
-import Upload from "./components/Upload_v3.vue";
+import Upload from "./components/Upload_v4.vue";
 
 export default {
   name: "App",

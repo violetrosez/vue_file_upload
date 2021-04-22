@@ -9,6 +9,7 @@
       :stroke-width="16"
       :percentage="progress"
     ></el-progress>
+    <p>node Koa/app_v2.js</p>
   </div>
 </template>
 <script>

@@ -16,11 +16,15 @@
      
     </el-upload> -->
 
-
-    <form action="http://localhost:3000/upload" method="POST" enctype="multipart/form-data"> 
-      <input type="file" name="file" id="file"/>
-      <input type="submit" value="提交">
+    <form
+      action="http://localhost:3000/upload"
+      method="POST"
+      enctype="multipart/form-data"
+    >
+      <input type="file" name="file" id="file" />
+      <input type="submit" value="提交" />
     </form>
+    <p>node Koa/app_v1.js</p>
   </div>
 </template>
 <script>
@@ -31,9 +35,8 @@ export default {
     };
   },
   methods: {
-
     handleUpload() {
-      let file = document.getElementById('file').files[0];
+      let file = document.getElementById("file").files[0];
       console.log(file);
     },
 

@@ -11,7 +11,7 @@
       :stroke-width="16"
       :percentage="progress"
     ></el-progress>
-    <p>node Koa/app_v3.js</p>
+    <p>node Koa/app_v4.js</p>
   </div>
 </template>
 <script>
@@ -124,6 +124,8 @@ export default {
         return;
       }
       let chunks = this.sliceFile(file);
+      let worker = new Worker("/web-worker.js");
+      worker.postMessage({ chunks });
 
       let tasks = [];
       for (let index = 0; index < chunks.length; index++) {
