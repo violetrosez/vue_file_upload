@@ -1,24 +1,36 @@
-# vue_file_upload
+# 文件上传-demo
 
-## Project setup
+1. 前端
+
 ```
 npm install
 ```
 
-### Compiles and hot-reloads for development
 ```
 npm run serve
 ```
 
-### Compiles and minifies for production
+2. koa 服务
+
+主要中间件：
+
+- koa-body
+- koa-router
+
 ```
-npm run build
+cd Koa
+
+npm install
+
+//根据demo版本
+node app_v1.js
+
 ```
 
 ### Lints and fixes files
+
 ```
 npm run lint
 ```
 
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+###
