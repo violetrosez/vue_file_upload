@@ -77,45 +77,84 @@ export default {
     },
 
     /**
+     * 校验文件格式
+     */
+    validateFileType(file) {
+      const map = new Map();
+
+      map.set("0000001C667479706D70", true); //mp4
+
+      let reader = new FileReader();
+      reader.readAsArrayBuffer(file); //读取二进制流
+      return new Promise((resolve) => {
+        reader.onload = function (event) {
+          try {
+            let buffer = new Uint8Array(event.target.result);
+            buffer = buffer.slice(0, 10);
+
+            let headBuffer = Array.from(buffer)
+              .map((e) => {
+                return e.toString(16).toUpperCase().padStart(2, "0");
+              })
+              .join("");
+
+            let flag = map.get(headBuffer);
+            console.log(headBuffer);
+            resolve(flag);
+          } catch (error) {
+            throw new Error(error);
+          }
+        };
+      });
+    },
+
+    /**
      * 处理upload
      */
-    handleUpload() {
+    async handleUpload() {
       let file = this.fileCtx;
       if (file == null) {
         alert("无文件");
         return;
       }
-      let chunks = this.sliceFile(file);
-
-      let tasks = [];
-      for (let index = 0; index < chunks.length; index++) {
-        tasks.push(
-          this.requestUpload({
-            chunk: chunks[index],
-            index,
-            filename: file.name,
-          })
-        );
+      let flag = await this.validateFileType(file);
+      if (!flag) {
+        alert("格式不支持");
+        return;
       }
-      console.time();
-      //发起合并请求
-      Promise.all(tasks).then(() => {
-        console.timeEnd();
-        let xhr = new XMLHttpRequest();
-        xhr.open("post", "http://localhost:3000/merge");
+      let chunks = this.sliceFile(file);
+      let worker = new Worker("/web-worker.js");
+      worker.postMessage({ chunks });
 
-        xhr.send(
-          JSON.stringify({ filename: this.fileCtx.name, size: chunks[0].size })
-        );
-        xhr.onreadystatechange = () => {
-          if (xhr.readyState == 4 && xhr.status == 200) {
-            this.$message({
-              message: "合并成功",
-              type: "success",
-            });
-          }
-        };
-      });
+      // let tasks = [];
+      // for (let index = 0; index < chunks.length; index++) {
+      //   tasks.push(
+      //     this.requestUpload({
+      //       chunk: chunks[index],
+      //       index,
+      //       filename: file.name,
+      //     })
+      //   );
+      // }
+      // console.time();
+      // //发起合并请求
+      // Promise.all(tasks).then(() => {
+      //   console.timeEnd();
+      //   let xhr = new XMLHttpRequest();
+      //   xhr.open("post", "http://localhost:3000/merge");
+
+      //   xhr.send(
+      //     JSON.stringify({ filename: this.fileCtx.name, size: chunks[0].size })
+      //   );
+      //   xhr.onreadystatechange = () => {
+      //     if (xhr.readyState == 4 && xhr.status == 200) {
+      //       this.$message({
+      //         message: "合并成功",
+      //         type: "success",
+      //       });
+      //     }
+      //   };
+      // });
     },
   },
 
