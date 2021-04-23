@@ -28,22 +28,26 @@ app.use(
 
 //中间件
 app.use(async (ctx, next) => {
-  await next();
-  if (ctx.status == 404) {
-    ctx.body = "404";
-  } else {
-    console.log(ctx.url);
+  try {
+    await next();
+    if (ctx.status == 404) {
+      ctx.body = "404";
+    } else {
+      console.log(ctx.url);
+    }
+  } catch (error) {
+    throw new Error(error);
   }
 });
 
 router.post("/upload", async (ctx) => {
   // 获取上传文件
   const file = ctx.request.files.chunk;
-  const { filename, index } = ctx.request.body;
+  const { hash, index } = ctx.request.body;
   // 读取文件流
   const fileReader = fs.createReadStream(file.path);
   // 设置文件保存路径
-  const filePath = path.join(__dirname, `/static/${filename}/`);
+  const filePath = path.join(__dirname, `/static/${hash}/`);
 
   // 判断文件夹是否存在，如果不在的话就创建一个
   if (!fs.existsSync(filePath)) {
@@ -51,7 +55,7 @@ router.post("/upload", async (ctx) => {
   }
 
   // 保存的文件名
-  const fileResource = filePath + `${index}-${filename}`;
+  const fileResource = filePath + `${hash}-${index}`;
   const writeStream = fs.createWriteStream(fileResource);
 
   fileReader.pipe(writeStream);
@@ -63,9 +67,9 @@ router.post("/upload", async (ctx) => {
 });
 
 router.post("/merge", async (ctx) => {
-  let { filename, size } = JSON.parse(ctx.request.body);
-  const filePath = path.join(__dirname, `/static/${filename}/`);
-
+  let { hash, size, format } = JSON.parse(ctx.request.body);
+  const filePath = path.join(__dirname, `/static/${hash}/`);
+  console.log(hash);
   let chunks = fs.readdirSync(filePath);
 
   chunks = chunks.sort((a, b) => {
@@ -79,7 +83,7 @@ router.post("/merge", async (ctx) => {
     let p = new Promise((resolve) => {
       const fileReader = fs.createReadStream(`${filePath}/${chunk}`);
       const writeStream = fs.createWriteStream(
-        path.join(__dirname, `/static/file/${filename}`),
+        path.join(__dirname, `/static/file/${hash}.${format}`),
         {
           start: index * size,
         }
@@ -109,6 +113,43 @@ router.post("/merge", async (ctx) => {
     message: "合并成功",
   };
 });
+
+//判断文件是否已存在
+router.post("/exist", async (ctx) => {
+  let { hash } = JSON.parse(ctx.request.body);
+  const filePath = path.join(__dirname, `/static/file/${hash}`);
+  if (fs.existsSync(filePath)) {
+    ctx.body = {
+      data: { exist: true },
+      code: 0,
+    };
+  } else {
+    ctx.body = {
+      data: { exist: false },
+      code: 0,
+    };
+  }
+});
+
+/**
+ * 已上传的切片
+ */
+router.post("/remainfiles", async (ctx) => {
+  let { hash } = JSON.parse(ctx.request.body);
+  const filePath = path.join(__dirname, `/static/${hash}/`);
+  if (!fs.existsSync(filePath)) {
+    ctx.body = {
+      data: [],
+      code: 0,
+    };
+  } else {
+    let files = fs.readdirSync(filePath);
+    ctx.body = {
+      data: files,
+      code: 0,
+    };
+  }
+});
 app.use(router.routes()); /*启动路由*/
 app.use(router.allowedMethods());
 
@@ -120,4 +161,8 @@ app.use(router.allowedMethods());
  */
 app.listen(3000, () => {
   console.log("start listen port 3000");
+});
+
+app.on("error", (err) => {
+  console.error("Ooops..\n", err);
 });

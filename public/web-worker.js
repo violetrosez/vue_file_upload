@@ -18,13 +18,15 @@ self.onmessage = function(d) {
     if (index < chunks.length) {
       loadNext();
       self.postMessage({
-        msg: index + " loaded",
+        percent: index * (100 / chunks.length),
+        msg: "loading",
       });
     } else {
       console.log("finished loading");
-      console.info("computed hash", spark.end()); // Compute hash
       self.postMessage({
-        hash: 100,
+        hash: spark.end(),
+        msg: "loaded",
+        percent: 100,
       });
     }
   };
