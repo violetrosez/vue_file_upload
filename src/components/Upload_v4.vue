@@ -2,8 +2,12 @@
   <div>
     <div class="content" ref="drop">
       <input type="file" name="file" id="file" @change="addFile2Ctx" />
-      <el-button size="small" type="primary" @click="handleUpload"
-        >点击上传</el-button
+      <el-button
+        size="small"
+        type="primary"
+        @click="handleUpload"
+        :disabled="state !== 'stop'"
+        >开始上传</el-button
       >
       <el-button
         size="small"
@@ -39,19 +43,23 @@ export default {
 
   methods: {
     stopReq() {
+      console.log(this.requestArr.length);
       this.requestArr.forEach((e) => {
         e.abort();
       });
+      this.state = "resume";
       this.requestArr = [];
     },
     reStart() {
       this.handleUpload();
+      this.state = "stop";
     },
     /**
      * change事件
      */
     addFile2Ctx() {
       this.fileCtx = document.getElementById("file").files[0];
+      this.progressArr = []; //添加文件的时候清空进度数组
     },
     /**
      * 文件切片方法
@@ -140,6 +148,7 @@ export default {
      * 处理upload
      */
     async handleUpload() {
+      // this.state = "resume";
       let file = this.fileCtx;
       if (file == null) {
         alert("无文件");
@@ -187,6 +196,7 @@ export default {
         );
         xhr.onreadystatechange = () => {
           if (xhr.readyState == 4 && xhr.status == 200) {
+            this.state = "stop";
             this.$message({
               message: "合并成功",
               type: "success",
